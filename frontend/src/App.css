@@ -1,0 +1,567 @@
+.app {
+  min-height: 100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar {
+  width: 240px;
+  height: 100vh;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  padding: 28px 18px;
+
+  background: #0f2032;
+  border-right: 1px solid #20344a;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* LOGO */
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 22px;
+  font-weight: 700;
+
+  margin-bottom: 45px;
+}
+
+.logo span {
+  color: #ffffff;
+}
+
+/* MENU TITLE */
+
+.menu-title {
+  color: #71859b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+
+  margin: 0 0 12px 10px;
+}
+
+/* MENU ITEMS */
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  padding: 12px 14px;
+  margin-bottom: 6px;
+
+  border-radius: 10px;
+
+  color: #8ea2b8;
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.menu-item:hover {
+  background: #172c43;
+  color: white;
+}
+
+.menu-item.active {
+  background: #24395b;
+  color: white;
+}
+
+/* BOTTOM */
+
+.sidebar-bottom {
+  margin-top: auto;
+}
+
+.learning-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 13px;
+
+  background: #14283c;
+  border: 1px solid #243b54;
+
+  border-radius: 12px;
+}
+
+.learning-box span {
+  font-size: 22px;
+}
+
+.learning-box strong {
+  display: block;
+  font-size: 12px;
+}
+
+.learning-box small {
+  display: block;
+  color: #6fd8a3;
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.main-content {
+  margin-left: 240px;
+
+  min-height: 100vh;
+
+  padding: 50px;
+
+  background: #0b1b2b;
+}
+
+.main-content h1 {
+  margin: 0;
+
+  font-size: 32px;
+}
+
+.main-content p {
+  color: #8498ad;
+
+  margin-top: 10px;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard {
+  max-width: 1200px;
+}
+
+
+/* WELCOME */
+
+.welcome-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 28px;
+}
+
+.small-label {
+  color: #71859b;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  margin-bottom: 8px;
+}
+
+.welcome-section h1 {
+  font-size: 32px;
+
+  margin: 0 0 8px;
+}
+
+.welcome-text {
+  color: #8498ad;
+
+  margin: 0;
+
+  font-size: 15px;
+}
+
+.level-badge {
+  background: #142c40;
+
+  border: 1px solid #29445e;
+
+  color: #72dca6;
+
+  padding: 10px 15px;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+/* LEARNING PROGRESS */
+
+.progress-card {
+  background: linear-gradient(
+          135deg,
+          #172c45,
+          #13263a
+  );
+
+  border: 1px solid #29425b;
+
+  border-radius: 16px;
+
+  padding: 24px;
+
+  margin-bottom: 20px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-header h2 {
+  margin: 0;
+
+  font-size: 20px;
+}
+
+.progress-header strong {
+  font-size: 30px;
+
+  color: #73dda7;
+}
+
+.progress-bar {
+  width: 100%;
+
+  height: 9px;
+
+  background: #0b1826;
+
+  border-radius: 20px;
+
+  margin-top: 20px;
+
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 72%;
+
+  height: 100%;
+
+  background: linear-gradient(
+          90deg,
+          #6edda4,
+          #8b7cff
+  );
+
+  border-radius: 20px;
+}
+
+.progress-text {
+  color: #71869d;
+
+  font-size: 12px;
+
+  margin: 10px 0 0;
+}
+
+
+/* TWO COLUMN AREA */
+
+.dashboard-grid {
+  display: grid;
+
+  grid-template-columns: 1.4fr 1fr;
+
+  gap: 18px;
+
+  margin-bottom: 30px;
+}
+
+
+/* MARKET CARD */
+
+.market-card {
+  background: #0f2032;
+
+  border: 1px solid #20384f;
+
+  border-radius: 16px;
+
+  padding: 22px;
+}
+
+.card-heading {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  margin-bottom: 15px;
+}
+
+.card-heading h2 {
+  margin: 0;
+
+  font-size: 20px;
+}
+
+.market-icon {
+  font-size: 25px;
+
+  background: #172c43;
+
+  padding: 10px;
+
+  border-radius: 12px;
+}
+
+.market-row {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 15px 0;
+
+  border-bottom: 1px solid #1b3045;
+}
+
+.market-row strong {
+  display: block;
+
+  font-size: 14px;
+}
+
+.market-row span {
+  display: block;
+
+  color: #71869d;
+
+  font-size: 11px;
+
+  margin-top: 4px;
+}
+
+.market-positive {
+  color: #5cdda0;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+.market-negative {
+  color: #ff7184;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+.learn-button {
+  margin-top: 18px;
+
+  width: 100%;
+
+  padding: 11px;
+
+  border: 1px solid #29445e;
+
+  background: #142b40;
+
+  color: #a9bbce;
+
+  border-radius: 9px;
+
+  cursor: pointer;
+}
+
+.learn-button:hover {
+  background: #1b3954;
+
+  color: white;
+}
+
+
+/* LESSON CARD */
+
+.lesson-card {
+  padding: 24px;
+
+  border-radius: 16px;
+
+  background: linear-gradient(
+          145deg,
+          #2a244a,
+          #162238
+  );
+
+  border: 1px solid #3b3860;
+}
+
+.lesson-icon {
+  display: inline-flex;
+
+  padding: 10px;
+
+  background: #39325d;
+
+  border-radius: 12px;
+
+  font-size: 22px;
+
+  margin-bottom: 15px;
+}
+
+.lesson-card h2 {
+  font-size: 21px;
+
+  margin: 5px 0 10px;
+}
+
+.lesson-card p:not(.small-label) {
+  color: #8d9eb1;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+.lesson-button {
+  margin-top: 15px;
+
+  padding: 11px 15px;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background: #8778ff;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+.lesson-button:hover {
+  background: #998dff;
+}
+
+
+/* STOCKS */
+
+.stocks-section {
+  margin-top: 10px;
+}
+
+.section-heading {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 15px;
+}
+
+.section-heading h2 {
+  margin: 0;
+
+  font-size: 20px;
+}
+
+.view-button {
+  border: none;
+
+  background: transparent;
+
+  color: #8e81ff;
+
+  cursor: pointer;
+}
+
+
+/* STOCK GRID */
+
+.stock-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 15px;
+}
+
+.stock-card {
+  background: #0f2032;
+
+  border: 1px solid #20384f;
+
+  border-radius: 15px;
+
+  padding: 18px;
+
+  transition: 0.2s ease;
+}
+
+.stock-card:hover {
+  transform: translateY(-3px);
+
+  border-color: #405875;
+
+  background: #12263b;
+}
+
+.stock-top {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+.stock-logo {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+
+  place-items: center;
+
+  background: #243b58;
+
+  border-radius: 10px;
+
+  font-weight: 700;
+
+  color: #dce7f2;
+}
+
+.stock-top strong {
+  display: block;
+
+  font-size: 13px;
+}
+
+.stock-top span {
+  display: block;
+
+  color: #6f849b;
+
+  font-size: 10px;
+
+  margin-top: 3px;
+}
+
+.stock-card h3 {
+  font-size: 21px;
+
+  margin: 20px 0 7px;
+}
