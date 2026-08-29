@@ -2,7 +2,9 @@ package com.finsight.service;
 
 import com.finsight.model.Holding;
 import com.finsight.model.Stock;
+import com.finsight.model.Wallet;
 import com.finsight.repository.HoldingRepository;
+import com.finsight.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -13,10 +15,12 @@ import java.util.*;
 public class PortfolioService {
 
     private final HoldingRepository holdings;
+    private final WalletRepository wallets;
     private final MarketDataService market;
 
-    public PortfolioService(HoldingRepository holdings, MarketDataService market) {
+    public PortfolioService(HoldingRepository holdings, WalletRepository wallets, MarketDataService market) {
         this.holdings = holdings;
+        this.wallets = wallets;
         this.market = market;
     }
 
@@ -26,10 +30,9 @@ public class PortfolioService {
         double invested = 0, current = 0;
 
         for (Holding h : list) {
-            // This now pulls live market data from your updated MarketDataService
             Stock s = market.find(h.getSymbol());
-            double inv = h.getQuantity().doubleValue() * h.getAveragePrice().doubleValue();
             double currentPrice = s.getPrice() != null ? s.getPrice().doubleValue() : h.getAveragePrice().doubleValue();
+            double inv = h.getQuantity().doubleValue() * h.getAveragePrice().doubleValue();
             double cur = h.getQuantity().doubleValue() * currentPrice;
             double pnl = cur - inv;
             invested += inv;
@@ -39,7 +42,7 @@ public class PortfolioService {
                     "symbol", h.getSymbol(),
                     "quantity", h.getQuantity(),
                     "averagePrice", h.getAveragePrice(),
-                    "currentPrice", s.getPrice(),
+                    "currentPrice", currentPrice,
                     "profitLoss", round(pnl),
                     "marketValue", round(cur),
                     "allocation", 0
@@ -49,7 +52,6 @@ public class PortfolioService {
         final double total = current;
         double maxAllocation = 0;
 
-        // Calculate allocations
         List<Map<String,Object>> finalizedRows = new ArrayList<>();
         for (Map<String, Object> r : rows) {
             Map<String,Object> m = new LinkedHashMap<>(r);
@@ -61,9 +63,16 @@ public class PortfolioService {
 
         double pnl = current - invested;
 
+        // Fetch user's virtual wallet cash balance
+        Wallet wallet = wallets.findById(userId).orElse(Wallet.builder().balance(new BigDecimal("1000000.00")).build());
+        double cashBalance = wallet.getBalance().doubleValue();
+        double netWorth = current + cashBalance;
+
         return Map.of(
                 "invested", round(invested),
                 "currentValue", round(current),
+                "cashBalance", round(cashBalance),
+                "netWorth", round(netWorth),
                 "profitLoss", round(pnl),
                 "profitPercent", invested == 0 ? 0 : round(pnl / invested * 100),
                 "diversificationScore", calculateDiversification(list.size(), maxAllocation),
@@ -73,15 +82,11 @@ public class PortfolioService {
 
     private int calculateDiversification(int holdingCount, double maxAllocation) {
         if (holdingCount == 0) return 0;
-
         int score = 50;
-
-        // Factor 1: Number of holdings
         if (holdingCount >= 10) score += 30;
         else if (holdingCount >= 5) score += 20;
         else if (holdingCount >= 3) score += 10;
 
-        // Factor 2: Concentration risk (penalize if one stock makes up too much of the portfolio)
         if (maxAllocation > 50) score -= 20;
         else if (maxAllocation > 30) score -= 10;
         else if (maxAllocation <= 15) score += 20;

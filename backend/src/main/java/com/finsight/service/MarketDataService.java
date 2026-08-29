@@ -16,17 +16,30 @@ public class MarketDataService {
 
     private final StockRepository stocks;
     private long lastFetchTime = 0;
-    private static final long CACHE_DURATION = 60000; // 60-second cache to prevent HTTP 429 block
+    private boolean isRateLimited = false;
+    private long rateLimitCooldown = 0;
+    private static final long CACHE_DURATION = 120000; // 2 minutes normal cache
+    private static final long COOLDOWN_DURATION = 900000; // 15 minutes cooldown if HTTP 429 hit
 
     public MarketDataService(StockRepository stocks) {
         this.stocks = stocks;
     }
 
-    public List<Map<String, Object>> stocksWithAIScores() {
+    public synchronized List<Map<String, Object>> stocksWithAIScores() {
         List<Stock> dbStocks = stocks.findAll();
 
-        // 1. Only ping Yahoo Finance once a minute
-        if (System.currentTimeMillis() - lastFetchTime > CACHE_DURATION) {
+        long now = System.currentTimeMillis();
+
+        // Check if we are currently in a rate-limit cooldown period
+        if (isRateLimited && now < rateLimitCooldown) {
+            // Skip live fetch silently, use local database values
+            return mapToResponse(dbStocks);
+        } else if (isRateLimited && now >= rateLimitCooldown) {
+            isRateLimited = false; // Reset cooldown
+        }
+
+        // Fetch live data if cache expired
+        if (now - lastFetchTime > CACHE_DURATION) {
             String[] symbols = dbStocks.stream().map(s -> s.getSymbol() + ".NS").toArray(String[]::new);
             try {
                 if (symbols.length > 0) {
@@ -44,17 +57,26 @@ public class MarketDataService {
                             }
                         }
                     }
-                    // 2. Save live prices to your DB so the Portfolio Service can use them instantly!
                     if (updated) {
                         stocks.saveAll(dbStocks);
                         lastFetchTime = System.currentTimeMillis();
                     }
                 }
             } catch (Exception e) {
-                System.err.println("FinSight Engine: Live data batch fetch failed. " + e.getMessage());
+                if (e.getMessage() != null && e.getMessage().contains("429")) {
+                    isRateLimited = true;
+                    rateLimitCooldown = System.currentTimeMillis() + COOLDOWN_DURATION;
+                    System.err.println("FinSight Engine: Yahoo Finance rate limit (429) hit. Entering 15-minute fallback mode using local database values.");
+                } else {
+                    System.err.println("FinSight Engine: Live data fetch warning: " + e.getMessage());
+                }
             }
         }
 
+        return mapToResponse(dbStocks);
+    }
+
+    private List<Map<String, Object>> mapToResponse(List<Stock> dbStocks) {
         return dbStocks.stream().map(s -> {
             Map<String, Object> stockData = new HashMap<>();
             stockData.put("symbol", s.getSymbol());
@@ -79,7 +101,6 @@ public class MarketDataService {
     }
 
     public Stock find(String symbol) {
-        // 3. Read directly from local DB. No more individual Yahoo requests, no more crashes!
-        return stocks.findBySymbol(symbol).orElseThrow(() -> new RuntimeException("Stock not found"));
+        return stocks.findBySymbol(symbol).orElseThrow(() -> new RuntimeException("Stock not found: " + symbol));
     }
 }
