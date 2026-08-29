@@ -6,8 +6,6 @@ import org.springframework.stereotype.Service;
 import yahoofinance.YahooFinance;
 import yahoofinance.quotes.stock.StockQuote;
 
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +15,8 @@ import java.util.stream.Collectors;
 public class MarketDataService {
 
     private final StockRepository stocks;
+    private long lastFetchTime = 0;
+    private static final long CACHE_DURATION = 60000; // 60-second cache to prevent HTTP 429 block
 
     public MarketDataService(StockRepository stocks) {
         this.stocks = stocks;
@@ -25,57 +25,48 @@ public class MarketDataService {
     public List<Map<String, Object>> stocksWithAIScores() {
         List<Stock> dbStocks = stocks.findAll();
 
-        // 1. Prepare symbols for NSE (append .NS)
-        String[] symbols = dbStocks.stream()
-                .map(s -> s.getSymbol() + ".NS")
-                .toArray(String[]::new);
+        // 1. Only ping Yahoo Finance once a minute
+        if (System.currentTimeMillis() - lastFetchTime > CACHE_DURATION) {
+            String[] symbols = dbStocks.stream().map(s -> s.getSymbol() + ".NS").toArray(String[]::new);
+            try {
+                if (symbols.length > 0) {
+                    Map<String, yahoofinance.Stock> liveData = YahooFinance.get(symbols);
+                    boolean updated = false;
 
-        Map<String, yahoofinance.Stock> tempLiveData = new HashMap<>();
-        try {
-            // 2. Fetch live data in a SINGLE batch request for extreme speed
-            if (symbols.length > 0) {
-                tempLiveData = YahooFinance.get(symbols);
-            }
-        } catch (IOException e) {
-            System.err.println("FinSight Engine: Live data fetch failed, falling back to DB data. " + e.getMessage());
-        }
-
-        // 3. Make it final so the lambda expression does not throw an error
-        final Map<String, yahoofinance.Stock> liveData = tempLiveData;
-
-        return dbStocks.stream()
-                .map(s -> {
-                    Map<String, Object> stockData = new HashMap<>();
-
-                    BigDecimal currentPrice = s.getPrice();
-                    BigDecimal changePercent = s.getChangePercent();
-
-                    // 4. Override DB values with live market data
-                    String ticker = s.getSymbol() + ".NS";
-                    if (liveData != null && liveData.containsKey(ticker) && liveData.get(ticker) != null) {
-                        StockQuote quote = liveData.get(ticker).getQuote();
-                        if (quote.getPrice() != null) {
-                            currentPrice = quote.getPrice();
-                            s.setPrice(currentPrice); // Update entity for accurate AI scoring
-                        }
-                        if (quote.getChangeInPercent() != null) {
-                            changePercent = quote.getChangeInPercent();
-                            s.setChangePercent(changePercent);
+                    for (Stock s : dbStocks) {
+                        String ticker = s.getSymbol() + ".NS";
+                        if (liveData.containsKey(ticker) && liveData.get(ticker) != null) {
+                            StockQuote quote = liveData.get(ticker).getQuote();
+                            if (quote.getPrice() != null) {
+                                s.setPrice(quote.getPrice());
+                                s.setChangePercent(quote.getChangeInPercent());
+                                updated = true;
+                            }
                         }
                     }
+                    // 2. Save live prices to your DB so the Portfolio Service can use them instantly!
+                    if (updated) {
+                        stocks.saveAll(dbStocks);
+                        lastFetchTime = System.currentTimeMillis();
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("FinSight Engine: Live data batch fetch failed. " + e.getMessage());
+            }
+        }
 
-                    stockData.put("symbol", s.getSymbol());
-                    stockData.put("companyName", s.getCompanyName());
-                    stockData.put("sector", s.getSector());
-                    stockData.put("price", currentPrice);
-                    stockData.put("changePercent", changePercent);
-                    stockData.put("aiScore", calculateScore(s));
-                    stockData.put("peRatio", s.getPeRatio());
-                    stockData.put("roe", s.getRoe());
-
-                    return stockData;
-                })
-                .collect(Collectors.toList());
+        return dbStocks.stream().map(s -> {
+            Map<String, Object> stockData = new HashMap<>();
+            stockData.put("symbol", s.getSymbol());
+            stockData.put("companyName", s.getCompanyName());
+            stockData.put("sector", s.getSector());
+            stockData.put("price", s.getPrice());
+            stockData.put("changePercent", s.getChangePercent());
+            stockData.put("aiScore", calculateScore(s));
+            stockData.put("peRatio", s.getPeRatio());
+            stockData.put("roe", s.getRoe());
+            return stockData;
+        }).collect(Collectors.toList());
     }
 
     private int calculateScore(Stock s) {
@@ -83,26 +74,12 @@ public class MarketDataService {
         if (s.getRoe() != null) score += Math.min(20, Math.max(-10, s.getRoe().doubleValue() / 3));
         if (s.getPeRatio() != null) score += s.getPeRatio().doubleValue() < 25 ? 10 : -4;
         if (s.getDebtToEquity() != null) score += s.getDebtToEquity().doubleValue() < .5 ? 8 : -5;
-
-        // AI Score now reacts to live intraday momentum
         if (s.getChangePercent() != null) score += Math.min(8, Math.max(-8, s.getChangePercent().doubleValue() * 2));
-
         return Math.max(0, Math.min(100, (int) Math.round(score)));
     }
 
     public Stock find(String symbol) {
-        Stock dbStock = stocks.findBySymbol(symbol).orElseThrow(() -> new RuntimeException("Stock not found"));
-
-        try {
-            // Fetch single stock live data
-            yahoofinance.Stock liveStock = YahooFinance.get(symbol + ".NS");
-            if (liveStock != null && liveStock.getQuote().getPrice() != null) {
-                dbStock.setPrice(liveStock.getQuote().getPrice());
-                dbStock.setChangePercent(liveStock.getQuote().getChangeInPercent());
-            }
-        } catch (IOException e) {
-            System.err.println("FinSight Engine: Live quote failed for " + symbol);
-        }
-        return dbStock;
+        // 3. Read directly from local DB. No more individual Yahoo requests, no more crashes!
+        return stocks.findBySymbol(symbol).orElseThrow(() -> new RuntimeException("Stock not found"));
     }
 }

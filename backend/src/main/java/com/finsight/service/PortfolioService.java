@@ -29,7 +29,8 @@ public class PortfolioService {
             // This now pulls live market data from your updated MarketDataService
             Stock s = market.find(h.getSymbol());
             double inv = h.getQuantity().doubleValue() * h.getAveragePrice().doubleValue();
-            double cur = h.getQuantity().doubleValue() * s.getPrice().doubleValue();
+            double currentPrice = s.getPrice() != null ? s.getPrice().doubleValue() : h.getAveragePrice().doubleValue();
+            double cur = h.getQuantity().doubleValue() * currentPrice;
             double pnl = cur - inv;
             invested += inv;
             current += cur;

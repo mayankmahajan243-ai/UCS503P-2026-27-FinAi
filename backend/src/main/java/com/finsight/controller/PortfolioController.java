@@ -1,8 +1,6 @@
 package com.finsight.controller;
 
-import com.finsight.dto.ApiResponse;
 import com.finsight.service.PortfolioService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,7 +15,8 @@ public class PortfolioController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<Object>> get(@PathVariable String userId) {
-        return ResponseEntity.ok(ApiResponse.success("Portfolio fetched successfully", portfolio.summary(userId)));
+    public Object get(@PathVariable String userId) {
+        // Returning raw data temporarily so the current React frontend can read it
+        return portfolio.summary(userId);
     }
 }
