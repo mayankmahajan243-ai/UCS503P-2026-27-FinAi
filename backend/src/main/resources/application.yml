@@ -8,10 +8,20 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
+
+  # WebSocket / STOMP
+  websocket:
+    allowed-origins: "*"
 
 server:
   port: 8080
+
+# Allow CORS for the React dev server
+spring.mvc.cors:
+  allowed-origins: "http://localhost:5173"
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: "*"

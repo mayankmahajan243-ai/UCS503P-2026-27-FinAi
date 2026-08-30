@@ -4,7 +4,7 @@ export default function StatCard({ label, value, change, positive = true }) {
     <div className="stat-card">
       <span className="muted">{label}</span>
       <strong>{value}</strong>
-      {change && <span className={positive ? "positive" : "negative"}>{change}</span>}
+      {change && <span style={{ fontSize: 12, marginTop: 6, display: "block", color: "var(--text-dim)" }}>{change}</span>}
     </div>
   );
 }
