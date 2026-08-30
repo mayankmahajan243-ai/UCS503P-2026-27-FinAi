@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
-import { NavLink, Route, Routes, Navigate } from "react-router-dom";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { NavLink, Route, Routes, Navigate, Link, useNavigate } from "react-router-dom";
 import {
   Bell, BrainCircuit, ChevronLeft, ChevronRight,
   LayoutDashboard, LineChart, Search, Settings,
-  Wallet, X, User, LogOut, TrendingUp,
+  Wallet, X, User, LogOut, TrendingUp, ArrowUpRight
 } from "lucide-react";
 
 import { useAuth } from "./context/AuthContext";
 import { getStocks, getWallet } from "./api";
-import { ToastContainer } from "./components/Toast";
+import { ToastContainer, toast } from "./components/Toast";
 import MarketTicker from "./components/MarketTicker";
+import TradeModal from "./components/TradeModal";
 import useLivePrices from "./hooks/useLivePrices";
 
 import Dashboard  from "./pages/Dashboard";
@@ -17,6 +18,7 @@ import Portfolio  from "./pages/Portfolio";
 import Watchlist  from "./pages/Watchlist";
 import AIInsights from "./pages/AIInsights";
 import Alerts     from "./pages/Alerts";
+import Profile    from "./pages/Profile";
 import Login      from "./pages/Login";
 
 const nav = [
@@ -25,17 +27,32 @@ const nav = [
   { to: "/watchlist", label: "Watchlist",    icon: LineChart },
   { to: "/ai",        label: "AI Insights",  icon: BrainCircuit },
   { to: "/alerts",    label: "Price Alerts", icon: Bell },
+  { to: "/profile",   label: "My Profile",   icon: User },
 ];
 
 export default function App() {
   const { user, token, loading, logout, isLoggedIn } = useAuth();
+  const navigate = useNavigate();
+
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
   const [searchOpen,   setSearchOpen]   = useState(false);
   const [profileOpen,  setProfileOpen]  = useState(false);
   const [searchQuery,  setSearchQuery]  = useState("");
   const [allStocks,    setAllStocks]    = useState([]);
   const [walletBal,    setWalletBal]    = useState(1000000);
+  const [searchTrade,  setSearchTrade]  = useState(null); // { stock, mode }
   const profileRef = useRef(null);
+
+  const userId = user?.username || "demo-user";
+
+  const refreshWallet = useCallback(() => {
+    if (!isLoggedIn) return;
+    getWallet(userId)
+      .then(d => {
+        if (d?.balance != null) setWalletBal(Number(d.balance));
+      })
+      .catch(() => {});
+  }, [isLoggedIn, userId]);
 
   // Fetch stocks for search + live ticker
   useEffect(() => {
@@ -45,14 +62,12 @@ export default function App() {
       .catch(console.error);
   }, [isLoggedIn]);
 
-  // Poll wallet every 5s so it stays fresh after trades
+  // Poll wallet every 4s so it stays fresh after trades
   useEffect(() => {
-    if (!isLoggedIn) return;
-    const refresh = () => getWallet("demo-user").then(d => setWalletBal(d?.balance ?? 1000000)).catch(() => {});
-    refresh();
-    const id = setInterval(refresh, 5000);
+    refreshWallet();
+    const id = setInterval(refreshWallet, 4000);
     return () => clearInterval(id);
-  }, [isLoggedIn]);
+  }, [refreshWallet]);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -68,7 +83,7 @@ export default function App() {
     return (s.symbol || "").toLowerCase().includes(q) || (s.companyName || "").toLowerCase().includes(q);
   });
 
-  const formatMoney = (v) => `₹${Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  const formatMoney = (v) => `₹${Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   if (loading) return <div className="full-center"><span className="login-spinner lg" /></div>;
   if (!isLoggedIn) return <Login />;
@@ -79,6 +94,13 @@ export default function App() {
     if (h < 17) return "Good afternoon";
     return "Good evening";
   })();
+
+  const handleLogout = () => {
+    setProfileOpen(false);
+    logout();
+    toast("Logged out successfully.", "success");
+    navigate("/login");
+  };
 
   return (
     <div className={`app-shell ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
@@ -108,10 +130,13 @@ export default function App() {
             <BrainCircuit size={20} strokeWidth={1.8} />
             <div className="nav-label">
               <b>AI Engine</b>
-              <span>Online · v1 baseline</span>
+              <span>Online · v2.0 Live Ticks</span>
             </div>
           </div>
-          <button className="nav-item ghost"><Settings size={20} strokeWidth={1.8} /><span className="nav-label">Settings</span></button>
+          <NavLink to="/profile" className="nav-item ghost">
+            <Settings size={20} strokeWidth={1.8} />
+            <span className="nav-label">Settings & Profile</span>
+          </NavLink>
         </div>
       </aside>
 
@@ -130,43 +155,59 @@ export default function App() {
         <header className="topbar">
           <div className="topbar-heading">
             <span className="eyebrow">INVESTMENT INTELLIGENCE PLATFORM</span>
-            <h1>{greeting}, {user?.displayName?.split(" ")[0] ?? "investor"}.</h1>
+            <h1>{greeting}, {user?.displayName?.split(" ")[0] ?? "Investor"}.</h1>
           </div>
 
           <div className="top-actions" style={{ position: "relative" }} ref={profileRef}>
             {/* Search */}
-            <button type="button" className="icon-btn" onClick={() => setSearchOpen(true)} title="Search Stocks">
-              <Search size={20} strokeWidth={2} />
+            <button type="button" className="icon-btn" onClick={() => setSearchOpen(true)} title="Search Nifty Stocks">
+              <Search size={19} strokeWidth={2} />
             </button>
 
+            {/* Virtual Cash Pill in Topbar */}
+            <Link to="/profile" className="topbar-wallet-pill" title="Virtual Wallet Cash — Click to Manage">
+              <Wallet size={15} />
+              <span className="wallet-pill-label">Cash:</span>
+              <strong className="wallet-pill-val">{formatMoney(walletBal)}</strong>
+            </Link>
+
             {/* NSE live dot */}
-            <div className="nse-badge"><span className="live-dot" />NSE LIVE</div>
+            <div className="nse-badge"><span className="live-dot" />NSE 800ms</div>
 
             {/* Profile avatar */}
-            <div className="avatar" onClick={() => setProfileOpen(p => !p)} title="Profile & Wallet">
-              {user?.displayName?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "MM"}
+            <div className="avatar" onClick={() => setProfileOpen(p => !p)} title="Profile & Wallet Menu">
+              {user?.displayName
+                ? user.displayName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+                : "MM"}
             </div>
 
             {/* Profile dropdown */}
             {profileOpen && (
               <div className="profile-dropdown">
                 <div className="profile-header">
-                  <div className="profile-avatar-lg">{user?.displayName?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}</div>
+                  <div className="profile-avatar-lg">
+                    {user?.displayName
+                      ? user.displayName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+                      : "MM"}
+                  </div>
                   <div>
-                    <div className="profile-name">{user?.displayName}</div>
-                    <div className="profile-username">@{user?.username}</div>
+                    <div className="profile-name">{user?.displayName || "Mayank Mahajan"}</div>
+                    <div className="profile-username">@{user?.username || "demo-user"}</div>
                   </div>
                 </div>
                 <div className="profile-wallet">
-                  <div className="profile-wallet-label"><Wallet size={13} /> VIRTUAL WALLET</div>
+                  <div className="profile-wallet-label"><Wallet size={13} /> VIRTUAL CASH BALANCE</div>
                   <div className="profile-wallet-value">{formatMoney(walletBal)}</div>
                 </div>
                 <div className="profile-actions">
-                  <button className="profile-action" onClick={() => setProfileOpen(false)}>
-                    <User size={15}/> My Portfolio
-                  </button>
-                  <button className="profile-action danger" onClick={() => { setProfileOpen(false); logout(); }}>
-                    <LogOut size={15}/> Logout
+                  <Link to="/profile" className="profile-action" onClick={() => setProfileOpen(false)}>
+                    <User size={15}/> View Profile & Wallet
+                  </Link>
+                  <Link to="/portfolio" className="profile-action" onClick={() => setProfileOpen(false)}>
+                    <Wallet size={15}/> My Portfolio
+                  </Link>
+                  <button className="profile-action danger" onClick={handleLogout}>
+                    <LogOut size={15}/> Sign Out
                   </button>
                 </div>
               </div>
@@ -182,7 +223,7 @@ export default function App() {
                 <Search size={18} opacity={0.5} />
                 <input
                   type="text"
-                  placeholder="Search Nifty 50 stocks by ticker or name…"
+                  placeholder="Search 50 Nifty stocks by ticker or name…"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   autoFocus
@@ -201,9 +242,20 @@ export default function App() {
                         <div className="search-result-symbol">{s.symbol}</div>
                         <div className="search-result-name">{s.companyName} · {s.sector}</div>
                       </div>
-                      <div className="search-result-price">
-                        <div className="search-result-val">₹{Number(price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
-                        <div className={up ? "positive" : "negative"}>{up ? "+" : ""}{Number(chg).toFixed(2)}%</div>
+                      <div className="search-result-price" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                        <div>
+                          <div className="search-result-val">₹{Number(price).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <div className={up ? "positive" : "negative"}>{up ? "+" : ""}{Number(chg).toFixed(2)}%</div>
+                        </div>
+                        <button
+                          className="btn-buy-sm"
+                          onClick={() => {
+                            setSearchTrade({ stock: { ...s, price }, mode: "BUY" });
+                            setSearchOpen(false);
+                          }}
+                        >
+                          Trade
+                        </button>
                       </div>
                     </div>
                   );
@@ -215,14 +267,31 @@ export default function App() {
           </div>
         )}
 
+        {/* ── SEARCH TRADE MODAL ────────────────── */}
+        {searchTrade && (
+          <TradeModal
+            stock={searchTrade.stock}
+            mode={searchTrade.mode}
+            livePrice={prices[searchTrade.stock.symbol]?.price ?? searchTrade.stock.price}
+            walletBalance={walletBal}
+            userId={userId}
+            onClose={() => setSearchTrade(null)}
+            onSuccess={() => {
+              setSearchTrade(null);
+              refreshWallet();
+            }}
+          />
+        )}
+
         {/* ── ROUTES ──────────────────────────── */}
         <div className="page-content">
           <Routes>
-            <Route path="/"          element={<Dashboard stocks={allStocks} prices={prices} walletBal={walletBal} />} />
-            <Route path="/portfolio" element={<Portfolio prices={prices} walletBal={walletBal} onTradeSuccess={() => getWallet("demo-user").then(d => setWalletBal(d?.balance ?? walletBal)).catch(()=>{})} />} />
+            <Route path="/"          element={<Dashboard stocks={allStocks} prices={prices} walletBal={walletBal} onWalletUpdated={refreshWallet} />} />
+            <Route path="/portfolio" element={<Portfolio prices={prices} walletBal={walletBal} onTradeSuccess={refreshWallet} />} />
             <Route path="/watchlist" element={<Watchlist prices={prices} allStocks={allStocks} walletBal={walletBal} />} />
             <Route path="/ai"        element={<AIInsights />} />
             <Route path="/alerts"    element={<Alerts prices={prices} allStocks={allStocks} />} />
+            <Route path="/profile"   element={<Profile onWalletUpdated={refreshWallet} />} />
             <Route path="/login"     element={<Navigate to="/" replace />} />
           </Routes>
         </div>

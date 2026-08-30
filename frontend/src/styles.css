@@ -1030,3 +1030,279 @@ tr:last-child td { border-bottom: none; }
   .portfolio-summary { grid-template-columns: 1fr 1fr; }
   .alert-form-row { flex-direction: column; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOPBAR WALLET PILL
+   ═══════════════════════════════════════════════════════════════ */
+.topbar-wallet-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.35);
+  border-radius: 100px;
+  color: #a5b4fc;
+  font-size: 12px;
+  text-decoration: none;
+  transition: all var(--transition);
+}
+.topbar-wallet-pill:hover {
+  background: rgba(99,102,241,0.22);
+  border-color: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.wallet-pill-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.wallet-pill-val {
+  font-weight: 800;
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROFILE PAGE
+   ═══════════════════════════════════════════════════════════════ */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.profile-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.profile-avatar-xl {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--violet));
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+}
+.profile-hero h2 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.profile-user-handle {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.profile-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  margin-top: 6px;
+}
+.profile-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.profile-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+}
+.detail-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.profile-detail-item span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.profile-detail-item strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--text);
+  margin-top: 2px;
+}
+.profile-logout-wrap {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.logout-btn-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 20px;
+  background: rgba(244,63,94,0.12);
+  border: 1px solid rgba(244,63,94,0.3);
+  border-radius: var(--radius-sm);
+  color: var(--red);
+  font-size: 14px;
+  font-weight: 700;
+  transition: all var(--transition);
+}
+.logout-btn-full:hover {
+  background: rgba(244,63,94,0.22);
+  border-color: var(--red);
+  transform: translateY(-1px);
+}
+
+.profile-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.wallet-management-card {
+  background: linear-gradient(145deg, rgba(99,102,241,0.08) 0%, rgba(8,15,30,0.85) 100%);
+  border: 1px solid rgba(99,102,241,0.3);
+}
+.wallet-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 100px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--green);
+}
+.wallet-big-display {
+  padding: 24px 0 20px;
+}
+.wallet-big-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.wallet-big-value {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  color: #fff;
+  margin: 6px 0 8px;
+  background: linear-gradient(135deg, #ffffff, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.wallet-big-sub {
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.wallet-big-sub b {
+  color: var(--text);
+}
+.wallet-actions-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.wallet-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 700;
+  transition: all var(--transition);
+}
+.wallet-action-btn.deposit {
+  background: linear-gradient(135deg, #059669, var(--green));
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+}
+.wallet-action-btn.deposit:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.wallet-action-btn.reset {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.wallet-action-btn.reset:hover:not(:disabled) {
+  background: rgba(255,255,255,0.12);
+  color: var(--text);
+}
+.wallet-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+.profile-stat-box {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+}
+.profile-stat-box span {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.profile-stat-box strong {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 6px 0 4px;
+}
+.profile-stat-box small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}

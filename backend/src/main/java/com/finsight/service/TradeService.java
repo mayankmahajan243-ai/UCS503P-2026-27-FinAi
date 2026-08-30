@@ -31,9 +31,10 @@ public class TradeService {
     }
 
     private Wallet getOrCreateWallet(String userId) {
-        return wallets.findById(userId).orElseGet(() -> {
+        String uid = (userId == null || userId.isBlank()) ? "demo-user" : userId.trim();
+        return wallets.findById(uid).orElseGet(() -> {
             Wallet newWallet = Wallet.builder()
-                    .userId(userId)
+                    .userId(uid)
                     .balance(new BigDecimal("1000000.00")) // Start with ₹10L virtual money
                     .build();
             return wallets.save(newWallet);
@@ -42,13 +43,22 @@ public class TradeService {
 
     @Transactional
     public Transaction executeBuy(String userId, String symbol, int quantity) {
-        Stock stock = market.find(symbol);
-        BigDecimal currentPrice = stock.getPrice();
+        if (quantity <= 0) {
+            throw new RuntimeException("Quantity must be greater than 0");
+        }
+        String uid = (userId == null || userId.isBlank()) ? "demo-user" : userId.trim();
+        String sym = (symbol != null) ? symbol.trim().toUpperCase().replace(".NS", "") : "";
+        if (sym.isBlank()) {
+            throw new RuntimeException("Stock symbol is required");
+        }
+
+        Stock stock = market.find(sym);
+        BigDecimal currentPrice = stock.getPrice() != null ? stock.getPrice() : BigDecimal.valueOf(100.00);
         BigDecimal totalCost = currentPrice.multiply(BigDecimal.valueOf(quantity));
 
-        Wallet wallet = getOrCreateWallet(userId);
+        Wallet wallet = getOrCreateWallet(uid);
         if (wallet.getBalance().compareTo(totalCost) < 0) {
-            throw new RuntimeException("Insufficient virtual funds. Requires: ₹" + totalCost);
+            throw new RuntimeException("Insufficient virtual funds. Balance: ₹" + wallet.getBalance() + ", Requires: ₹" + totalCost);
         }
 
         // 1. Deduct from Wallet
@@ -56,10 +66,10 @@ public class TradeService {
         wallets.save(wallet);
 
         // 2. Update or Create Holding
-        Holding holding = holdings.findByUserId(userId).stream()
-                .filter(h -> h.getSymbol().equals(symbol))
+        Holding holding = holdings.findByUserId(uid).stream()
+                .filter(h -> h.getSymbol().equalsIgnoreCase(sym))
                 .findFirst()
-                .orElse(Holding.builder().userId(userId).symbol(symbol).quantity(BigDecimal.ZERO).averagePrice(BigDecimal.ZERO).build());
+                .orElse(Holding.builder().userId(uid).symbol(sym).quantity(BigDecimal.ZERO).averagePrice(BigDecimal.ZERO).build());
 
         BigDecimal oldTotalValue = holding.getAveragePrice().multiply(holding.getQuantity());
         BigDecimal newTotalQuantity = holding.getQuantity().add(BigDecimal.valueOf(quantity));
@@ -71,7 +81,7 @@ public class TradeService {
 
         // 3. Log Transaction
         Transaction tx = Transaction.builder()
-                .userId(userId).symbol(symbol).transactionType("BUY")
+                .userId(uid).symbol(sym).transactionType("BUY")
                 .quantity(quantity).executionPrice(currentPrice).timestamp(LocalDateTime.now())
                 .build();
         return transactions.save(tx);
@@ -79,21 +89,30 @@ public class TradeService {
 
     @Transactional
     public Transaction executeSell(String userId, String symbol, int quantity) {
-        Holding holding = holdings.findByUserId(userId).stream()
-                .filter(h -> h.getSymbol().equals(symbol))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("You do not own this stock."));
-
-        if (holding.getQuantity().compareTo(BigDecimal.valueOf(quantity)) < 0) {
-            throw new RuntimeException("Insufficient holding quantity.");
+        if (quantity <= 0) {
+            throw new RuntimeException("Quantity must be greater than 0");
+        }
+        String uid = (userId == null || userId.isBlank()) ? "demo-user" : userId.trim();
+        String sym = (symbol != null) ? symbol.trim().toUpperCase().replace(".NS", "") : "";
+        if (sym.isBlank()) {
+            throw new RuntimeException("Stock symbol is required");
         }
 
-        Stock stock = market.find(symbol);
-        BigDecimal currentPrice = stock.getPrice();
+        Holding holding = holdings.findByUserId(uid).stream()
+                .filter(h -> h.getSymbol().equalsIgnoreCase(sym))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("You do not own any shares of " + sym));
+
+        if (holding.getQuantity().compareTo(BigDecimal.valueOf(quantity)) < 0) {
+            throw new RuntimeException("Insufficient holding quantity. You own " + holding.getQuantity() + " shares.");
+        }
+
+        Stock stock = market.find(sym);
+        BigDecimal currentPrice = stock.getPrice() != null ? stock.getPrice() : holding.getAveragePrice();
         BigDecimal totalRevenue = currentPrice.multiply(BigDecimal.valueOf(quantity));
 
         // 1. Add to Wallet
-        Wallet wallet = getOrCreateWallet(userId);
+        Wallet wallet = getOrCreateWallet(uid);
         wallet.setBalance(wallet.getBalance().add(totalRevenue));
         wallets.save(wallet);
 
@@ -108,7 +127,7 @@ public class TradeService {
 
         // 3. Log Transaction
         Transaction tx = Transaction.builder()
-                .userId(userId).symbol(symbol).transactionType("SELL")
+                .userId(uid).symbol(sym).transactionType("SELL")
                 .quantity(quantity).executionPrice(currentPrice).timestamp(LocalDateTime.now())
                 .build();
         return transactions.save(tx);

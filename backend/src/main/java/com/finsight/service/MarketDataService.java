@@ -101,6 +101,8 @@ public class MarketDataService {
     }
 
     public Stock find(String symbol) {
-        return stocks.findBySymbol(symbol).orElseThrow(() -> new RuntimeException("Stock not found: " + symbol));
+        if (symbol == null) throw new RuntimeException("Stock symbol cannot be null");
+        String clean = symbol.trim().toUpperCase().replace(".NS", "");
+        return stocks.findBySymbol(clean).orElseThrow(() -> new RuntimeException("Stock not found: " + clean));
     }
 }
