@@ -10,9 +10,11 @@ import com.finsight.repository.UserRepository;
 import com.finsight.repository.WalletRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
@@ -21,58 +23,68 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final HoldingRepository holdings;
     private final WalletRepository wallets;
     private final UserRepository users;
+    private final PasswordEncoder passwordEncoder;
 
     public DatabaseSeeder(StockRepository stocks, HoldingRepository holdings,
-                          WalletRepository wallets, UserRepository users) {
+                          WalletRepository wallets, UserRepository users, PasswordEncoder passwordEncoder) {
         this.stocks   = stocks;
         this.holdings = holdings;
         this.wallets  = wallets;
         this.users    = users;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) {
 
-        // ─────────────────────────────────────────────
-        // 1. Seed Demo User (Mayank Mahajan)
-        // ─────────────────────────────────────────────
-        if (users.findByUsername("demo-user").isEmpty()) {
+        Optional<User> demoUserOpt = users.findByUsername("demo-user");
+        if (demoUserOpt.isEmpty()) {
             users.save(User.builder()
                     .username("demo-user")
-                    .password("finsight2026")
+                    .password(passwordEncoder.encode("finsight2026"))
                     .displayName("Mayank Mahajan")
                     .email("mayankmahajan243@gmail.com")
                     .role("INVESTOR")
                     .build());
             System.out.println("FinSight Engine: Demo user seeded → demo-user / finsight2026");
+        } else {
+            User demoUser = demoUserOpt.get();
+            String pwd = demoUser.getPassword();
+            if (pwd != null && !pwd.startsWith("$2a$") && !pwd.startsWith("$2b$") && !pwd.startsWith("$2y$")) {
+                demoUser.setPassword(passwordEncoder.encode(pwd));
+                users.save(demoUser);
+                System.out.println("FinSight Engine: Upgraded demo-user password to BCrypt hash");
+            }
         }
 
         // ─────────────────────────────────────────────
         // 2. Seed Virtual Wallet (₹10L)
         // ─────────────────────────────────────────────
-        holdings.deleteAll();
-        wallets.deleteAll();
-        wallets.save(Wallet.builder()
-                .userId("demo-user")
-                .balance(new BigDecimal("1000000.00"))
-                .build());
-        System.out.println("FinSight Engine: Seeded Virtual Wallet with ₹10,00,000");
+        if (wallets.count() == 0) {
+            wallets.save(Wallet.builder()
+                    .userId("demo-user")
+                    .balance(new BigDecimal("1000000.00"))
+                    .build());
+            System.out.println("FinSight Engine: Seeded Virtual Wallet with ₹10,00,000");
+        }
 
         // ─────────────────────────────────────────────
         // 3. Seed Demo Portfolio (with userId fix)
         // ─────────────────────────────────────────────
-        holdings.saveAll(List.of(
-                Holding.builder().userId("demo-user").symbol("RELIANCE").quantity(new BigDecimal("100")).averagePrice(new BigDecimal("1285.00")).build(),
-                Holding.builder().userId("demo-user").symbol("TCS").quantity(new BigDecimal("50")).averagePrice(new BigDecimal("2340.00")).build(),
-                Holding.builder().userId("demo-user").symbol("HDFCBANK").quantity(new BigDecimal("150")).averagePrice(new BigDecimal("1600.00")).build()
-        ));
-        System.out.println("FinSight Engine: Seeded Demo Portfolio (3 holdings)");
+        if (holdings.count() == 0) {
+            holdings.saveAll(List.of(
+                    Holding.builder().userId("demo-user").symbol("RELIANCE").quantity(new BigDecimal("100")).averagePrice(new BigDecimal("1285.00")).build(),
+                    Holding.builder().userId("demo-user").symbol("TCS").quantity(new BigDecimal("50")).averagePrice(new BigDecimal("2340.00")).build(),
+                    Holding.builder().userId("demo-user").symbol("HDFCBANK").quantity(new BigDecimal("150")).averagePrice(new BigDecimal("1600.00")).build()
+            ));
+            System.out.println("FinSight Engine: Seeded Demo Portfolio (3 holdings)");
+        }
 
         // ─────────────────────────────────────────────
         // 4. Seed Full Nifty 50 Universe
         // ─────────────────────────────────────────────
-        stocks.deleteAll();
-        stocks.saveAll(List.of(
+        if (stocks.count() == 0) {
+            stocks.saveAll(List.of(
 
                 // ── TECHNOLOGY ──────────────────────────────────────────────────────
                 Stock.builder().symbol("TCS").companyName("Tata Consultancy Services Ltd").sector("Technology").price(new BigDecimal("3542.00")).changePercent(new BigDecimal("0.42")).peRatio(new BigDecimal("26.1")).roe(new BigDecimal("47.3")).debtToEquity(new BigDecimal("0.0")).build(),
@@ -140,6 +152,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 Stock.builder().symbol("ULTRACEMCO").companyName("UltraTech Cement Ltd").sector("Infrastructure").price(new BigDecimal("11842.60")).changePercent(new BigDecimal("0.62")).peRatio(new BigDecimal("38.4")).roe(new BigDecimal("16.4")).debtToEquity(new BigDecimal("0.3")).build(),
                 Stock.builder().symbol("GRASIM").companyName("Grasim Industries Ltd").sector("Infrastructure").price(new BigDecimal("2748.40")).changePercent(new BigDecimal("0.48")).peRatio(new BigDecimal("22.8")).roe(new BigDecimal("12.8")).debtToEquity(new BigDecimal("0.4")).build()
         ));
-        System.out.println("FinSight Engine: ✅ Full Nifty 50 Universe seeded — 50 stocks ready!");
+            System.out.println("FinSight Engine: ✅ Full Nifty 50 Universe seeded — 50 stocks ready!");
+        }
     }
 }

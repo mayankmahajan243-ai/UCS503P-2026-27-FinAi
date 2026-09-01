@@ -18,5 +18,19 @@ services:
       timeout: 5s
       retries: 10
 
+  ai-service:
+    build: ./ai-service
+    container_name: fintech-ai-service
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
 volumes:
   postgres_data:

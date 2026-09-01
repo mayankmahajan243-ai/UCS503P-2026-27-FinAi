@@ -111,9 +111,41 @@ export default function Dashboard({ stocks = [], prices = {}, walletBal = 100000
   const allocData = holdings.map(h => ({ name: h.symbol, value: Number(h.marketValue || 1), sector: h.sector }));
 
   if (loading) return (
-    <div className="page full-center">
-      <RefreshCw size={36} className="spin" />
-      <p style={{ marginTop: 16, opacity: 0.6 }}>Connecting to FinSight Market Engine…</p>
+    <div className="page">
+      <div className="hero-grid">
+        <div className="hero-card skeleton-pulse" style={{ minHeight: 340 }}>
+          <div style={{ padding: 32 }}>
+            <div className="skeleton-line" style={{ width: '40%', height: 14, marginBottom: 16 }} />
+            <div className="skeleton-line" style={{ width: '60%', height: 32, marginBottom: 12 }} />
+            <div className="skeleton-line" style={{ width: '35%', height: 14 }} />
+          </div>
+          <div style={{ padding: '0 32px', paddingBottom: 32 }}>
+            <div className="skeleton-line" style={{ width: '100%', height: 180, borderRadius: 12 }} />
+          </div>
+        </div>
+        <div className="ai-card skeleton-pulse" style={{ minHeight: 340 }}>
+          <div style={{ padding: 32 }}>
+            <div className="skeleton-line" style={{ width: '50%', height: 14, marginBottom: 20 }} />
+            <div className="skeleton-line" style={{ width: '90%', height: 18, marginBottom: 10 }} />
+            <div className="skeleton-line" style={{ width: '75%', height: 18, marginBottom: 20 }} />
+            <div className="skeleton-line" style={{ width: '80%', height: 14 }} />
+          </div>
+        </div>
+      </div>
+      <div className="stats-grid" style={{ marginTop: 20 }}>
+        {[1,2,3,4].map(i => (
+          <div key={i} className="stat-card skeleton-pulse" style={{ minHeight: 100 }}>
+            <div style={{ padding: 20 }}>
+              <div className="skeleton-line" style={{ width: '60%', height: 12, marginBottom: 12 }} />
+              <div className="skeleton-line" style={{ width: '45%', height: 24 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ textAlign: 'center', marginTop: 24, opacity: 0.5 }}>
+        <RefreshCw size={16} className="spin" style={{ verticalAlign: 'middle', marginRight: 8 }} />
+        Connecting to FinSight Market Engine…
+      </p>
     </div>
   );
 

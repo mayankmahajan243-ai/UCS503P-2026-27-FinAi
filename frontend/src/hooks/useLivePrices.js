@@ -3,8 +3,18 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
 /**
+ * Derive WebSocket URL from VITE_API_URL or fall back to localhost.
+ * VITE_API_URL = "http://localhost:8080/api" → WS = "http://localhost:8080/ws"
+ */
+function getWsUrl() {
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+  // Strip trailing /api or /api/ and append /ws
+  return apiUrl.replace(/\/api\/?$/, "/ws");
+}
+
+/**
  * useLivePrices — subscribes to WebSocket /topic/prices
- * Returns: { prices }  →  Map<symbol, { price, changePercent }>
+ * Returns: { prices, connected }  →  Map<symbol, { price, changePercent }>
  */
 export default function useLivePrices(initialStocks = []) {
   const [prices, setPrices] = useState(() => {
@@ -22,17 +32,22 @@ export default function useLivePrices(initialStocks = []) {
     return map;
   });
 
+  const [connected, setConnected] = useState(false);
   const clientRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
     try {
+      const wsUrl = getWsUrl();
       const client = new Client({
-        webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
-        reconnectDelay: 4000,
-        debug: () => {}, // suppress verbose debug in console
+        webSocketFactory: () => new SockJS(wsUrl),
+        reconnectDelay: 5000,          // 5s initial reconnect
+        heartbeatIncoming: 10000,
+        heartbeatOutgoing: 10000,
+        debug: () => {},               // suppress verbose debug
         onConnect: () => {
           if (!isMounted) return;
+          setConnected(true);
           client.subscribe("/topic/prices", (msg) => {
             try {
               const ticks = JSON.parse(msg.body);
@@ -52,8 +67,10 @@ export default function useLivePrices(initialStocks = []) {
             } catch (e) { /* ignore parse errors */ }
           });
         },
-        onStompError: () => {},
-        onWebSocketError: () => {}
+        onDisconnect: () => { if (isMounted) setConnected(false); },
+        onStompError: () => { if (isMounted) setConnected(false); },
+        onWebSocketError: () => { if (isMounted) setConnected(false); },
+        onWebSocketClose: () => { if (isMounted) setConnected(false); },
       });
 
       client.activate();
@@ -89,5 +106,5 @@ export default function useLivePrices(initialStocks = []) {
     });
   }, [initialStocks]);
 
-  return { prices };
+  return { prices, connected };
 }

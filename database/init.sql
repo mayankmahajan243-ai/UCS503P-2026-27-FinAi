@@ -1,3 +1,35 @@
+-- ════════════════════════════════════════════════════════════════
+-- FinSight AI Platform — Complete Database Schema
+-- ════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS app_users (
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(80) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    display_name VARCHAR(150),
+    email VARCHAR(200),
+    role VARCHAR(30) NOT NULL DEFAULT 'INVESTOR',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS wallets (
+    id BIGSERIAL PRIMARY KEY,
+    user_id VARCHAR(80) NOT NULL,
+    balance NUMERIC(16,2) NOT NULL DEFAULT 1000000.00,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id VARCHAR(80) NOT NULL,
+    symbol VARCHAR(20) NOT NULL,
+    type VARCHAR(10) NOT NULL,
+    quantity NUMERIC(16,4) NOT NULL,
+    price NUMERIC(14,2) NOT NULL,
+    total NUMERIC(16,2) NOT NULL,
+    executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS stocks (
     id BIGSERIAL PRIMARY KEY,
     symbol VARCHAR(20) UNIQUE NOT NULL,
@@ -56,3 +88,9 @@ ON CONFLICT DO NOTHING;
 INSERT INTO watchlists(user_id, symbol)
 VALUES ('demo-user','INFY'), ('demo-user','ICICIBANK'), ('demo-user','SUNPHARMA')
 ON CONFLICT DO NOTHING;
+
+CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_holdings_user ON holdings(user_id);
+CREATE INDEX IF NOT EXISTS idx_wallets_user ON wallets(user_id);
+CREATE INDEX IF NOT EXISTS idx_watchlists_user ON watchlists(user_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_user ON price_alerts(user_id);

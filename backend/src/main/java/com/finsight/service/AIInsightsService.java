@@ -10,9 +10,11 @@ import java.util.*;
 public class AIInsightsService {
 
     private final StockRepository stockRepository;
+    private final AiServiceClient aiServiceClient;
 
-    public AIInsightsService(StockRepository stockRepository) {
+    public AIInsightsService(StockRepository stockRepository, AiServiceClient aiServiceClient) {
         this.stockRepository = stockRepository;
+        this.aiServiceClient = aiServiceClient;
     }
 
     public Map<String, Object> getInsights(String userId) {
@@ -34,6 +36,25 @@ public class AIInsightsService {
                             + momentumScore
                             + riskScore) / 4.0f
             );
+
+            // Hybrid: blend with Python AI service score if available
+            try {
+                var pyScore = aiServiceClient.scoreStock(
+                        stock.getSymbol(),
+                        stock.getPeRatio() != null ? stock.getPeRatio().doubleValue() : 25,
+                        stock.getRoe() != null ? stock.getRoe().doubleValue() : 15,
+                        stock.getDebtToEquity() != null ? stock.getDebtToEquity().doubleValue() : 0.5,
+                        stock.getChangePercent() != null ? stock.getChangePercent().doubleValue() : 0,
+                        0
+                );
+                if (pyScore != null && pyScore.get("score") != null) {
+                    double pythonScore = ((Number) pyScore.get("score")).doubleValue();
+                    // Weighted blend: 70% Java + 30% Python
+                    aiScore = (int) Math.round(aiScore * 0.7 + pythonScore * 0.3);
+                }
+            } catch (Exception ignored) {
+                // Fallback to Java-only scoring
+            }
 
             String recommendation = getRecommendation(aiScore);
 

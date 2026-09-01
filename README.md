@@ -1,243 +1,194 @@
-# AI-Powered FinTech Investment Platform
+# FinSight AI — Intelligent Investment & Wealth Platform
 
-A full-stack investment intelligence platform inspired by modern Indian investing apps. It is designed to be developed systematically with:
+[![Backend CI](https://github.com/mayankmahajan243-ai/UCS503P-2026-27-FinAi/actions/workflows/backend.yml/badge.svg)](https://github.com/mayankmahajan243-ai/UCS503P-2026-27-FinAi/actions/workflows/backend.yml)
+[![Frontend CI](https://github.com/mayankmahajan243-ai/UCS503P-2026-27-FinAi/actions/workflows/frontend.yml/badge.svg)](https://github.com/mayankmahajan243-ai/UCS503P-2026-27-FinAi/actions/workflows/frontend.yml)
 
-- **Frontend:** React + Vite (WebStorm)
-- **Backend:** Java + Spring Boot + JPA (IntelliJ IDEA)
-- **AI Service:** Python + FastAPI
-- **Database:** PostgreSQL
-- **DevOps:** Docker Compose + GitHub Actions
-- **Charts:** Recharts
-- **AI:** explainable scoring, risk profiling, sentiment analysis, portfolio diagnostics, and an extension point for an LLM
+A high-performance full-stack investment intelligence platform inspired by modern Indian wealth platforms (Groww, Zerodha Kite). Built with institutional-grade risk analytics, explainable 4-factor AI scoring, real-time WebSocket market streams, and a virtual paper-trading engine.
 
-> **Important:** This repository is a software project/demo. AI scores are not financial advice and should not be used as the sole basis for real-money investment decisions.
+---
 
-## 1. Architecture
+## Architecture Overview
 
 ```text
-React Web App
-     |
-     | REST/JSON
-     v
-Spring Boot API  --------------------> PostgreSQL
-     |
-     | REST/JSON
-     v
-Python AI Service
-     |
-     +--> Risk scoring
-     +--> Stock scoring
-     +--> News sentiment
-     +--> Portfolio diagnostics
-     +--> Optional future LLM integration
+┌────────────────────────────────────────────────────────┐
+│                   React 19 Frontend                    │
+│   (Vite + Recharts + Lucide + STOMP / SockJS Client)   │
+└───────────────────────┬────────────────────────────────┘
+                        │
+         REST (JWT)     │     WebSocket (/topic/prices)
+                        ▼
+┌────────────────────────────────────────────────────────┐
+│               Spring Boot 3.5.4 Backend                │
+│  - Spring Security + BCrypt + Stateless JWT Filter     │
+│  - MarketSyncService: 800ms live price simulator      │
+│  - TradeService: Paper trading & virtual cash ledger   │
+│  - AIInsightsService: 4-factor hybrid scoring engine   │
+└──────────────┬──────────────────────────┬──────────────┘
+               │                          │
+          JPA / SQL                  REST / JSON
+               │                          │
+               ▼                          ▼
+┌─────────────────────────┐    ┌─────────────────────────┐
+│     PostgreSQL 16       │    │    Python AI Service    │
+│ (Users, Wallets, Trades,│    │ (FastAPI + Pydantic +   │
+│  Holdings, Nifty 50)    │    │  Scikit-learn + NumPy)  │
+└─────────────────────────┘    └─────────────────────────┘
 ```
 
-The frontend is intentionally independent from the backend so you can open:
-- `frontend/` in **WebStorm**
-- `backend/` in **IntelliJ IDEA**
-- `ai-service/` in PyCharm/VS Code or a terminal
+---
 
-## 2. Features included
+## Key Features
 
-### Dashboard
-- Portfolio value
-- Invested amount
-- Profit/loss
-- Daily market snapshot
-- Top AI opportunities
-- Market sentiment
-- Allocation chart
+### 1. 🤖 Explainable AI Investment Lab
+- **4-Factor Intelligence**: Multi-factor scoring model combining Fundamentals (ROE, D/E), Valuation (P/E), Momentum (daily %), and Volatility Risk.
+- **Hybrid Scoring**: Microservice architecture connecting Java Spring Boot with Python FastAPI via resilient circuit-breaker fallback (`AiServiceClient`).
+- **Natural Language Thesis**: Auto-generated executive summaries and recommendation verdicts (`BUY`, `ACCUMULATE`, `HOLD`, `WATCH`, `AVOID`).
+- **Sentiment Engine**: Keyword-based sentiment classification across Indian financial news headlines.
 
-### AI Investment Intelligence
-- Risk-profile-aware stock scoring
-- Explainable recommendation reasons
-- Bullish/bearish/neutral news sentiment
-- Portfolio diversification analysis
-- Risk flags
-- Suggested watchlist candidates
-- AI summary endpoint ready for richer LLM integration
+### 2. ⚡ Real-Time Market Feed & Visualizations
+- **800ms WebSocket Ticker**: Live price fluctuation stream broadcasted over STOMP/SockJS to both top marquee and interactive tables.
+- **Nifty 50 Market Heatmap**: Visual intensity grid of top 50 Indian enterprises color-coded by real-time movement.
+- **Interactive Charts**: Responsive Net Worth performance graphs with multi-timeframe toggles (`1W`, `1M`, `3M`, `1Y`) powered by Recharts.
 
-### Portfolio
-- Holdings table
-- Quantity and average price
-- Current price
-- P&L
-- Allocation
-- Diversification score
+### 3. 💼 Risk-Free Paper Trading & Virtual Wallet
+- **₹10,00,000 Starting Capital**: Practice real market orders without financial risk.
+- **Transactional Buy/Sell Engine**: Real-time balance debits/credits, dynamic weighted average price calculation, and execution audit logging.
+- **Two-Step Order Confirmation**: Built-in modal safeguards preventing accidental market executions.
 
-### Watchlist
-- Add/remove symbols
-- Current price
-- Daily movement
-- AI score
-- Recommendation label
+### 4. 🔒 Enterprise Security
+- **Stateless JWT Authentication**: Secure Bearer tokens with configurable expiration (24h default) and automatic client-side logout.
+- **BCrypt Password Hashing**: Industry-standard cryptographic hashing on user credentials.
+- **Dynamic CORS & WebSockets**: Flexible cross-origin resource sharing allowing dynamic frontend deployment ports.
 
-### Alerts
-- Price alert model and API
-- Backend persistence
-- Frontend page ready for alert management
+---
 
-## 3. Project structure
+## Tech Stack
 
-```text
-AI-FinTech-Investment-Platform/
-├── frontend/                  # React app - open in WebStorm
-├── backend/                   # Spring Boot - open in IntelliJ
-├── ai-service/                # FastAPI AI service
-├── database/
-│   └── init.sql
-├── .github/
-│   └── workflows/
-│       ├── frontend.yml
-│       └── backend.yml
-├── docker-compose.yml
-├── .gitignore
-└── README.md
-```
+| Layer | Technologies |
+|:------|:-------------|
+| **Frontend** | React 19, Vite 7, React Router DOM 7, Recharts 3, Lucide React, Axios, StompJS, SockJS |
+| **Backend** | Java 21, Spring Boot 3.5.4, Spring Security, Spring Data JPA, Hibernate, Lombok, JJWT 0.12.6, YahooFinanceAPI |
+| **AI Microservice** | Python 3.11+, FastAPI 0.116, Uvicorn, Pydantic 2.11, NumPy 2.3, Scikit-learn 1.7 |
+| **Database** | PostgreSQL 16 Alpine |
+| **DevOps** | Docker Compose, GitHub Actions CI/CD |
 
-## 4. Run locally
+---
 
-### Step A - Start PostgreSQL + AI service
+## Getting Started
 
-Install Docker Desktop, then from the project root:
+### Prerequisites
+- **Docker Desktop** (for PostgreSQL and containerized services)
+- **Java 21 JDK** & **Maven** (for Backend)
+- **Node.js 20+** & **npm** (for Frontend)
+- **Python 3.11+** (for AI Service local execution)
+
+---
+
+### Step 1: Clone Repository & Configure Environment
 
 ```bash
-docker compose up -d postgres
+git clone https://github.com/mayankmahajan243-ai/UCS503P-2026-27-FinAi.git
+cd UCS503P-2026-27-FinAi
+
+# Copy environment file
+cp .env.example .env
 ```
 
-For the AI service:
+---
+
+### Step 2: Start PostgreSQL Database & AI Service
+
+Using Docker Compose:
+
+```bash
+# Start PostgreSQL (and optionally AI microservice)
+docker compose up -d
+```
+
+To run the Python AI Service locally:
 
 ```bash
 cd ai-service
 python -m venv .venv
 # Windows:
 .venv\Scripts\activate
-# macOS/Linux:
+# Linux/macOS:
 # source .venv/bin/activate
 
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 9000 --reload
 ```
+AI Health Check: `http://localhost:9000/health`
 
-AI health check:
-`http://localhost:8000/health`
+---
 
-### Step B - Start backend in IntelliJ
+### Step 3: Start Spring Boot Backend
 
-Open the `backend` folder as a Maven project.
-
-Use:
 ```bash
+cd backend
 mvn spring-boot:run
 ```
+Backend API: `http://localhost:8080`  
+Health Check: `http://localhost:8080/api/health`
 
-or run `FintechApplication.java`.
+---
 
-Backend:
-`http://localhost:8080`
-
-Health:
-`http://localhost:8080/api/health`
-
-### Step C - Start frontend in WebStorm
-
-Open `frontend` in WebStorm:
+### Step 4: Start React Frontend
 
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
+Frontend App: `http://localhost:5173`
 
-Frontend:
-`http://localhost:5173`
+---
 
-## 5. Environment variables
+## Demo Credentials
 
-Backend can use:
+You can sign in with the pre-seeded investor profile:
+- **Username**: `demo-user`
+- **Password**: `finsight2026`
+- **Virtual Balance**: ₹10,00,000.00
+- **Pre-seeded Portfolio**: Reliance Industries (100 shares), TCS (50 shares), HDFC Bank (150 shares)
 
-```text
-DB_URL=jdbc:postgresql://localhost:5432/fintech
-DB_USERNAME=fintech
-DB_PASSWORD=fintech
-AI_SERVICE_URL=http://localhost:8000
-```
+---
 
-Frontend can use:
+## API Endpoints Reference
 
-```text
-VITE_API_URL=http://localhost:8080/api
-```
+### Authentication
+- `POST /api/auth/login` — Authenticate and receive JWT Bearer token
+- `GET /api/auth/me` — Retrieve active authenticated user details
+- `POST /api/auth/logout` — Invalidate user session
 
-Copy `.env.example` to `.env` where required.
+### Stocks & Market Data
+- `GET /api/stocks` — Fetch all 50 Nifty stocks with metrics & AI scores
+- `GET /api/stocks/{symbol}` — Query specific stock details
 
-## 6. GitHub workflow
+### Portfolio & Trading
+- `GET /api/portfolio/{userId}` — Portfolio valuation, invested capital, diversification rating
+- `GET /api/portfolio/{userId}/transactions` — Order history audit trail
+- `POST /api/trade/buy` — Execute paper buy order
+- `POST /api/trade/sell` — Execute paper sell order
 
-Recommended branch structure:
+### Virtual Wallet
+- `GET /api/wallet/{userId}` — Fetch current cash balance
+- `POST /api/wallet/{userId}/deposit` — Add virtual funds
+- `POST /api/wallet/{userId}/reset` — Reset wallet to ₹10,00,000
 
-```text
-main
-develop
-feature/frontend-dashboard
-feature/backend-api
-feature/ai-engine
-feature/database
-feature/auth
-```
+### Watchlist & Alerts
+- `GET /api/watchlist/{userId}` — Retrieve saved stocks
+- `POST /api/watchlist/{userId}?symbol={sym}` — Pin stock to watchlist
+- `DELETE /api/watchlist/{userId}/{sym}` — Remove stock
+- `GET /api/alerts/{userId}` — Get active price triggers
+- `POST /api/alerts/{userId}` — Create price alert
+- `DELETE /api/alerts/{id}` — Delete price alert
 
-First push:
+### AI Intelligence
+- `GET /api/ai/insights` — Overall market sentiment & top stock rankings
 
-```bash
-git init
-git add .
-git commit -m "chore: initialize AI fintech platform"
-git branch -M main
-git remote add origin <YOUR_GITHUB_REPOSITORY_URL>
-git push -u origin main
-```
+---
 
-Then create feature branches rather than developing directly on `main`.
+## Disclaimer
 
-## 7. Suggested development roadmap
-
-### Phase 1 - Foundation
-- [x] React dashboard
-- [x] Spring Boot API
-- [x] PostgreSQL schema
-- [x] Python AI service
-- [x] Docker PostgreSQL
-- [x] GitHub Actions skeleton
-
-### Phase 2 - Core finance
-- [ ] Real market-data provider
-- [ ] Mutual fund NAV provider
-- [ ] Authentication + JWT
-- [ ] Broker integration
-- [ ] Transaction ledger
-- [ ] SIP scheduler
-- [ ] Tax/P&L reports
-
-### Phase 3 - Advanced AI
-- [ ] Time-series forecasting model
-- [ ] Financial-news ingestion
-- [ ] FinBERT-style sentiment model
-- [ ] Personalized risk engine
-- [ ] Explainable AI feature attribution
-- [ ] Portfolio rebalancing simulator
-- [ ] AI chat assistant
-- [ ] Backtesting engine
-
-### Phase 4 - Production
-- [ ] Redis caching
-- [ ] WebSocket live prices
-- [ ] Rate limiting
-- [ ] Secrets manager
-- [ ] Observability
-- [ ] Automated database migrations
-- [ ] Cloud deployment
-- [ ] Security review
-
-## 8. Important production note
-
-The starter uses deterministic demo market data so the application works immediately without requiring a paid market-data API. Replace `MarketDataService` with a licensed market-data provider before using real-time financial data.
-
-For a production investment product, also add authentication, authorization, audit logs, encryption, secure secret management, compliance controls, and appropriate financial/regulatory review.
+This platform is developed as an educational software project and paper-trading simulator. AI factor calculations and sentiment ratings do not constitute certified financial advice.

@@ -2,24 +2,26 @@ package com.finsight.controller;
 
 import com.finsight.model.User;
 import com.finsight.repository.UserRepository;
+import com.finsight.security.JwtService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
-    // In-memory token store: token → username
-    private static final Map<String, String> tokenStore = new ConcurrentHashMap<>();
-
-    public AuthController(UserRepository userRepository) {
+    public AuthController(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -32,7 +34,7 @@ public class AuthController {
 
         Optional<User> userOpt = userRepository.findByUsername(username);
 
-        if (userOpt.isEmpty() || !userOpt.get().getPassword().equals(password)) {
+        if (userOpt.isEmpty()) {
             return ResponseEntity.status(401).body(Map.of(
                 "success", false,
                 "message", "Invalid username or password"
@@ -40,15 +42,37 @@ public class AuthController {
         }
 
         User user = userOpt.get();
-        String token = UUID.randomUUID().toString().replace("-", "");
-        tokenStore.put(token, user.getUsername());
+        boolean passwordMatches = false;
+        String storedPassword = user.getPassword();
+
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+            passwordMatches = passwordEncoder.matches(password, storedPassword);
+        } else {
+            // Plain-text match fallback (e.g. from previous seeder) + auto-upgrade to BCrypt
+            if (storedPassword.equals(password)) {
+                passwordMatches = true;
+                user.setPassword(passwordEncoder.encode(password));
+                userRepository.save(user);
+            }
+        }
+
+        if (!passwordMatches) {
+            return ResponseEntity.status(401).body(Map.of(
+                "success", false,
+                "message", "Invalid username or password"
+            ));
+        }
+        String token = jwtService.generateToken(user.getUsername(), Map.of(
+                "displayName", user.getDisplayName() != null ? user.getDisplayName() : "",
+                "role", user.getRole() != null ? user.getRole() : "INVESTOR"
+        ));
 
         return ResponseEntity.ok(Map.of(
             "success", true,
             "token", token,
             "user", Map.of(
                 "username",    user.getUsername(),
-                "displayName", user.getDisplayName(),
+                "displayName", user.getDisplayName() != null ? user.getDisplayName() : "",
                 "email",       user.getEmail() != null ? user.getEmail() : "",
                 "role",        user.getRole() != null ? user.getRole() : "INVESTOR"
             )
@@ -56,15 +80,14 @@ public class AuthController {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // GET /api/auth/me   (pass token as query param or header)
+    // GET /api/auth/me   (authenticated via JWT)
     // ─────────────────────────────────────────────────────────────
     @GetMapping("/me")
-    public ResponseEntity<?> me(@RequestHeader(value = "X-Auth-Token", required = false) String token) {
-        if (token == null || !tokenStore.containsKey(token)) {
+    public ResponseEntity<?> me(Principal principal) {
+        if (principal == null) {
             return ResponseEntity.status(401).body(Map.of("success", false, "message", "Not authenticated"));
         }
-        String username = tokenStore.get(token);
-        Optional<User> userOpt = userRepository.findByUsername(username);
+        Optional<User> userOpt = userRepository.findByUsername(principal.getName());
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(401).body(Map.of("success", false, "message", "User not found"));
         }
@@ -73,7 +96,7 @@ public class AuthController {
             "success", true,
             "user", Map.of(
                 "username",    user.getUsername(),
-                "displayName", user.getDisplayName(),
+                "displayName", user.getDisplayName() != null ? user.getDisplayName() : "",
                 "email",       user.getEmail() != null ? user.getEmail() : "",
                 "role",        user.getRole() != null ? user.getRole() : "INVESTOR"
             )
@@ -81,22 +104,10 @@ public class AuthController {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // POST /api/auth/logout
+    // POST /api/auth/logout  (stateless — client discards token)
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader(value = "X-Auth-Token", required = false) String token) {
-        if (token != null) tokenStore.remove(token);
-        return ResponseEntity.ok(Map.of("success", true, "message", "Logged out successfully"));
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Utility: validate token (used by other controllers optionally)
-    // ─────────────────────────────────────────────────────────────
-    public static boolean isValidToken(String token) {
-        return token != null && tokenStore.containsKey(token);
-    }
-
-    public static String getUsernameFromToken(String token) {
-        return tokenStore.getOrDefault(token, "demo-user");
+    public ResponseEntity<?> logout() {
+        return ResponseEntity.ok(Map.of("success", true, "message", "Logged out successfully. Discard your token."));
     }
 }

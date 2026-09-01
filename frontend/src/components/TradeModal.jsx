@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { executeBuy, executeSell } from "../api";
-import { X, TrendingUp, TrendingDown, Zap, CheckCircle, AlertTriangle } from "lucide-react";
+import { X, TrendingUp, TrendingDown, Zap, CheckCircle, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export default function TradeModal({ stock, mode, livePrice, walletBalance, userId = "demo-user", onClose, onSuccess }) {
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { success, message }
+  const [confirming, setConfirming] = useState(false);
   const inputRef = useRef(null);
 
   const isBuy  = mode === "BUY";
@@ -24,6 +25,10 @@ export default function TradeModal({ stock, mode, livePrice, walletBalance, user
 
   const handleTrade = async () => {
     if (qty < 1) return;
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
     setLoading(true);
     try {
       const fn = isBuy ? executeBuy : executeSell;
@@ -34,6 +39,7 @@ export default function TradeModal({ stock, mode, livePrice, walletBalance, user
       setResult({ success: false, message: err?.response?.data?.message || err.message || "Trade failed" });
     } finally {
       setLoading(false);
+      setConfirming(false);
     }
   };
 
@@ -97,13 +103,22 @@ export default function TradeModal({ stock, mode, livePrice, walletBalance, user
             )}
 
             {/* CTA */}
+            {confirming && (
+              <div className="trade-confirm-banner">
+                <AlertTriangle size={16} />
+                <span>You are about to {isBuy ? "buy" : "sell"} <b>{qty} × {stock.symbol}</b> for <b>₹{Number(total).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b>. Click again to confirm.</span>
+              </div>
+            )}
             <button
-              className={`trade-cta ${isBuy ? "cta-buy" : "cta-sell"}`}
+              className={`trade-cta ${confirming ? "cta-confirm" : isBuy ? "cta-buy" : "cta-sell"}`}
               onClick={handleTrade}
               disabled={loading || (isBuy && !canAfford)}
             >
-              {loading ? <span className="login-spinner"/> : <><Zap size={17}/> Confirm {isBuy ? "Buy" : "Sell"}</>}
+              {loading ? <span className="login-spinner"/> : confirming ? <><ShieldCheck size={17}/> Yes, Execute Trade</> : <><Zap size={17}/> {isBuy ? "Buy" : "Sell"} {stock.symbol}</>}
             </button>
+            {confirming && (
+              <button className="trade-cancel-btn" onClick={() => setConfirming(false)}>Cancel</button>
+            )}
           </>
         )}
       </div>

@@ -1,29 +1,41 @@
 package com.finsight.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
 /**
- * Global CORS config — allows both port 5173 and 5174
- * (Vite sometimes picks 5174 if 5173 is in use).
+ * Global CORS configuration — used by both Spring MVC and Spring Security.
+ * Allows Vite dev ports (5173, 5174) and configurable extra origins.
  */
 @Configuration
 public class CorsConfig {
 
+    @Value("${app.cors.allowed-origins:}")
+    private String extraOrigins;
+
     @Bean
-    public CorsFilter corsFilter() {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
+
+        List<String> origins = new java.util.ArrayList<>(List.of(
                 "http://localhost:5173",
                 "http://localhost:5174",
                 "http://127.0.0.1:5173",
                 "http://127.0.0.1:5174"
         ));
+        if (extraOrigins != null && !extraOrigins.isBlank()) {
+            for (String o : extraOrigins.split(",")) {
+                origins.add(o.trim());
+            }
+        }
+
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("*"));
@@ -32,6 +44,6 @@ public class CorsConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
+        return source;
     }
 }
