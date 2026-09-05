@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS watchlists (
     id BIGSERIAL PRIMARY KEY,
     user_id VARCHAR(80) NOT NULL,
     symbol VARCHAR(20) NOT NULL,
-    UNIQUE(user_id, symbol)
+    watchlist_name VARCHAR(100) NOT NULL DEFAULT 'Default',
+    UNIQUE(user_id, symbol, watchlist_name)
 );
 
 CREATE TABLE IF NOT EXISTS price_alerts (

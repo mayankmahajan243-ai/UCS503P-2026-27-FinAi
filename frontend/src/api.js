@@ -49,9 +49,18 @@ export const executeSell = (userId, symbol, quantity) =>
   api.post("/trade/sell", { userId, symbol, quantity }).then(r => r.data);
 
 // ─── WATCHLIST ────────────────────────────────────────────────────
-export const getWatchlist        = (userId = "demo-user") => api.get(`/watchlist/${userId}`).then(r => r.data);
-export const addToWatchlist      = (userId, symbol) => api.post(`/watchlist/${userId}?symbol=${symbol}`).then(r => r.data);
-export const removeFromWatchlist = (userId, symbol) => api.delete(`/watchlist/${userId}/${symbol}`).then(r => r.data);
+export const getWatchlistNames   = (userId = "demo-user") =>
+  api.get(`/watchlist/${userId}/names`).then(r => r.data);
+export const getWatchlist        = (userId = "demo-user", name = "Default") =>
+  api.get(`/watchlist/${userId}?name=${encodeURIComponent(name)}`).then(r => r.data);
+export const addToWatchlist      = (userId, symbol, name = "Default") =>
+  api.post(`/watchlist/${userId}?symbol=${encodeURIComponent(symbol)}&name=${encodeURIComponent(name)}`).then(r => r.data);
+export const removeFromWatchlist = (userId, symbol, name = "Default") =>
+  api.delete(`/watchlist/${userId}/${encodeURIComponent(symbol)}?name=${encodeURIComponent(name)}`).then(r => r.data);
+export const createWatchlistGroup= (userId, name) =>
+  api.post(`/watchlist/${userId}/create?name=${encodeURIComponent(name)}`).then(r => r.data);
+export const deleteWatchlistGroup= (userId, name) =>
+  api.delete(`/watchlist/${userId}/group/${encodeURIComponent(name)}`).then(r => r.data);
 
 // ─── ALERTS ───────────────────────────────────────────────────────
 export const getAlerts    = (userId = "demo-user") => api.get(`/alerts/${userId}`).then(r => r.data);

@@ -288,7 +288,7 @@ export default function App() {
           <Routes>
             <Route path="/"          element={<Dashboard stocks={allStocks} prices={prices} walletBal={walletBal} onWalletUpdated={refreshWallet} />} />
             <Route path="/portfolio" element={<Portfolio prices={prices} walletBal={walletBal} onTradeSuccess={refreshWallet} />} />
-            <Route path="/watchlist" element={<Watchlist prices={prices} allStocks={allStocks} walletBal={walletBal} />} />
+            <Route path="/watchlist" element={<Watchlist prices={prices} allStocks={allStocks} walletBal={walletBal} userId={userId} onTradeSuccess={refreshWallet} />} />
             <Route path="/ai"        element={<AIInsights />} />
             <Route path="/alerts"    element={<Alerts prices={prices} allStocks={allStocks} />} />
             <Route path="/profile"   element={<Profile onWalletUpdated={refreshWallet} />} />
